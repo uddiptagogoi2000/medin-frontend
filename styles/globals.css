@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@plugin '../hero.ts';
+
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans: "font", sans-serif;
+    --font-mono: "monospace", monospace;
+}
+
+.ProseMirror img[data-uploading="true"] {
+  opacity: 0.6;
+  filter: grayscale(20%);
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af; /* gray-400 */
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror {
+  height: 100%;
+  min-height: 100%;
+  outline: none;
+}
+
+.ProseMirror > * {
+  min-height: 1.5em;
+}
+
+.recent-posts-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.recent-posts-swiper .swiper-slide {
+  height: auto;
+}
