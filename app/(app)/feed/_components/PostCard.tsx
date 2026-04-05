@@ -667,7 +667,7 @@ const PostCard = ({
             </ModalHeader>
 
             <ModalBody className="text-sm text-gray-500 text-center py-2 px-3">
-              Are you sure you want to permanently remove this post from MedIn?
+              Are you sure you want to permanently remove this post from Serona?
             </ModalBody>
 
             <ModalFooter className="flex gap-4 pt-2 border-t-1 border-default-200 px-3">

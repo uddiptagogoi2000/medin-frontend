@@ -12,13 +12,13 @@ const SignupPage = () => {
           <div className="relative z-10">
             <div className="mb-12 flex items-center gap-3">
               <h2 className="text-2xl font-bold leading-tight tracking-tight">
-                MedIn
+                Serona
               </h2>
             </div>
 
             <div className="max-w-lg space-y-8">
               <h1 className="text-4xl font-black leading-tight xl:text-5xl">
-                Empowering the future of medical collaboration.
+                Breaking Silos, Connecting Doctors.
               </h1>
               <ul className="space-y-6">
                 <li className="flex items-start gap-4">
@@ -49,7 +49,7 @@ const SignupPage = () => {
 
           <div className="relative z-10 mt-12 max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
             <p className="mb-4 font-light italic leading-relaxed text-slate-300">
-              &quot;MedNet has completely changed how I consult on complex
+              &quot;Serona has completely changed how I consult on complex
               neurology cases. The ability to reach verified peers instantly is
               invaluable for patient care.&quot;
             </p>
@@ -69,7 +69,7 @@ const SignupPage = () => {
 
         <main className="flex h-full flex-1 flex-col items-center justify-center overflow-y-auto bg-white p-6 lg:p-12 xl:p-20">
           <div className="mb-10 self-start lg:hidden">
-            <h2 className="text-xl font-bold text-slate-900">MedIn</h2>
+            <h2 className="text-xl font-bold text-slate-900">Serona</h2>
           </div>
 
           <div className="w-full max-w-lg">

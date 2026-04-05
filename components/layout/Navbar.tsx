@@ -134,7 +134,7 @@ const AppNavbar = ({ onSearchFocusChange }: AppNavbarProps) => {
         wrapper: "max-w-7xl",
       }}
     >
-      <p className="font-extrabold tracking-tight text-primary">MedIn</p>
+      <p className="font-extrabold tracking-tight text-primary">Serona</p>
       <NavbarContent justify="start" className="flex-1 max-w-xl">
         <div
           ref={searchWrapperRef}

@@ -243,7 +243,7 @@ export default function FeedPage() {
               <span>Get the app</span>
             </div>
             <p className="mt-4 text-[11px] text-gray-400">
-              MedIn Corporation © 2026
+              Serona Corporation © 2026
             </p>
           </section>
         </div>

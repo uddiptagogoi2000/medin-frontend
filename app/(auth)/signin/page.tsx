@@ -16,10 +16,10 @@ export default function SigninPage() {
 
         <div className="relative z-10 max-w-xl text-white">
           <div className="mb-12 flex items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">MedIn</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Serona</h2>
           </div>
           <h1 className="mb-6 text-5xl font-black leading-tight">
-            Connecting the World&apos;s Medical Minds.
+            Breaking Silos, Connecting Doctors.
           </h1>
           <p className="text-xl font-medium leading-relaxed text-white/80">
             Access a global network of specialized insights, real-time
@@ -72,7 +72,7 @@ export default function SigninPage() {
 
         <footer className="border-t border-slate-100 p-8 text-center text-xs text-slate-500 lg:text-left">
           <div className="mx-auto flex max-w-md flex-col gap-4 lg:mx-0 lg:flex-row lg:justify-between">
-            <p>© 2026 MedIn.</p>
+            <p>© 2026 Serona.</p>
             <div className="space-x-4">
               <a className="transition-colors hover:text-[#ec5b13]" href="#">
                 Privacy Policy

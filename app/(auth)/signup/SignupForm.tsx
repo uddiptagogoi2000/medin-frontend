@@ -26,8 +26,16 @@ export default function SignupForm() {
   const [code, setCode] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [inviteCheckLoading, setInviteCheckLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [lastInviteCheckedEmail, setLastInviteCheckedEmail] = useState("");
+  const [lastInviteAllowed, setLastInviteAllowed] = useState<boolean | null>(
+    null,
+  );
+  const [lastInviteMessage, setLastInviteMessage] = useState<string | null>(
+    null,
+  );
 
   // STEP 1 — Create signup + send OTP
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,11 +47,69 @@ export default function SignupForm() {
     setGeneralError(null);
 
     try {
+      const trimmedEmail = form.email.trim();
+      const normalizedEmail = trimmedEmail.toLowerCase();
+
+      if (!trimmedEmail) {
+        setGeneralError("Email is required.");
+        return;
+      }
+
+      // Invite-only check (cached for unchanged email).
+      if (lastInviteCheckedEmail !== normalizedEmail) {
+        setInviteCheckLoading(true);
+
+        try {
+          const inviteResponse = await fetch(apiUrl("/users/invite-check"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: trimmedEmail,
+            }),
+          });
+
+          if (!inviteResponse.ok) {
+            throw new Error("Invite check failed.");
+          }
+
+          const inviteData = await inviteResponse.json();
+          const isAllowed = Boolean(inviteData?.allowed);
+          const inviteMessage =
+            inviteData?.message ||
+            "This platform is invite-only. This email is not on the approved invite list.";
+
+          setLastInviteCheckedEmail(normalizedEmail);
+          setLastInviteAllowed(isAllowed);
+          setLastInviteMessage(isAllowed ? null : inviteMessage);
+
+          if (!isAllowed) {
+            setGeneralError(inviteMessage);
+            return;
+          }
+        } catch (error) {
+          console.error("Invite check error:", error);
+          setGeneralError(
+            "We could not verify invite access right now. Please try again.",
+          );
+          return;
+        } finally {
+          setInviteCheckLoading(false);
+        }
+      } else if (lastInviteAllowed === false) {
+        setGeneralError(
+          lastInviteMessage ||
+            "This platform is invite-only. This email is not on the approved invite list.",
+        );
+        return;
+      }
+
       const [firstName, ...rest] = form.fullName.trim().split(" ");
       const lastName = rest.join(" ");
 
       await signUp.create({
-        emailAddress: form.email,
+        emailAddress: trimmedEmail,
         password: form.password,
         firstName,
         lastName,
@@ -147,6 +213,12 @@ export default function SignupForm() {
     <div className="w-full">
       {!verifying ? (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {generalError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {generalError}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">
@@ -170,7 +242,16 @@ export default function SignupForm() {
                 placeholder="j.reed@hospital.org"
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  const nextEmail = e.target.value;
+                  setForm({ ...form, email: nextEmail });
+
+                  const normalized = nextEmail.trim().toLowerCase();
+                  if (normalized !== lastInviteCheckedEmail) {
+                    setLastInviteAllowed(null);
+                    setLastInviteMessage(null);
+                  }
+                }}
                 required
               />
             </div>
@@ -304,7 +385,7 @@ export default function SignupForm() {
               type="checkbox"
             />
             <p className="text-xs text-slate-500">
-              I agree to the MedNet{" "}
+              I agree to Serona{" "}
               <a
                 className="font-medium text-[#ec5b13] hover:underline"
                 href="#"
@@ -315,17 +396,17 @@ export default function SignupForm() {
             </p>
           </div>
 
-          {generalError && (
-            <p className="text-sm text-red-500">{generalError}</p>
-          )}
-
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || inviteCheckLoading}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#ec5b13] py-4 font-bold text-white shadow-lg shadow-[#ec5b13]/20 transition-all hover:bg-[#d95310] disabled:opacity-60"
           >
             <span>
-              {loading ? "Creating..." : "Create Professional Account"}
+              {inviteCheckLoading
+                ? "Checking invite..."
+                : loading
+                  ? "Creating..."
+                  : "Create Professional Account"}
             </span>
             <span>→</span>
           </button>
