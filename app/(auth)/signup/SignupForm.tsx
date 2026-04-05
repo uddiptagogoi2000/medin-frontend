@@ -3,10 +3,12 @@
 import { useSignUp, useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { apiUrl } from "@/utils/api";
+import { useRouter } from "next/navigation";
 
 export default function SignupForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const { getToken } = useAuth();
+  const router = useRouter();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -88,13 +90,11 @@ export default function SignupForm() {
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
 
-        const token = await getToken();
+        const token = await getToken({ template: "backend" });
 
         if (!token) {
           throw new Error("Failed to retrieve token.");
         }
-
-        console.log("TOKEN:", token);
 
         const response = await fetch(apiUrl("/users/onboard"), {
           method: "POST",
@@ -113,18 +113,30 @@ export default function SignupForm() {
         });
 
         if (!response.ok) {
-          throw new Error("Backend onboarding failed.");
+          let message = "Backend onboarding failed.";
+          try {
+            const data = await response.json();
+            message = data?.detail || data?.message || message;
+          } catch {
+            // ignore JSON parse failure
+          }
+          throw new Error(message);
         }
 
-        alert("Signup successful 🚀");
+        setVerifying(false);
+        router.push("/feed");
+      } else {
+        setGeneralError("Verification not complete. Please try again.");
       }
     } catch (err: any) {
       console.error("Verification error:", err);
 
       if (err.errors?.length > 0) {
         setGeneralError(err.errors[0].message);
+      } else if (err?.message) {
+        setGeneralError(err.message);
       } else {
-        setGeneralError("Invalid verification code.");
+        setGeneralError("Could not complete signup. Please try again.");
       }
     } finally {
       setLoading(false);

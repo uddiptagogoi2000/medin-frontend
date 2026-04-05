@@ -12,6 +12,8 @@ export default function SigninForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [secondFactorCode, setSecondFactorCode] = useState("");
+  const [requiresSecondFactor, setRequiresSecondFactor] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -41,6 +43,11 @@ export default function SigninForm() {
 
         // Redirect to /feed after successful signin
         router.push("/feed");
+      } else if (result.status === "needs_second_factor") {
+        await signIn.prepareSecondFactor({
+          strategy: "email_code",
+        });
+        setRequiresSecondFactor(true);
       } else {
         console.log("Additional sign-in steps required:", result);
       }
@@ -56,6 +63,70 @@ export default function SigninForm() {
       setLoading(false);
     }
   };
+
+  const handleSecondFactor = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setGeneralError(null);
+
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code: secondFactorCode,
+      });
+
+      if (result.status !== "complete") {
+        throw new Error("Verification incomplete. Please try again.");
+      }
+
+      await setActive({ session: result.createdSessionId });
+      const token = await getToken({ template: "backend" });
+      console.log("Backend JWT:", token);
+      router.push("/feed");
+    } catch (err: any) {
+      console.error("Second factor error:", err);
+      if (err.errors?.length > 0) {
+        setGeneralError(err.errors[0].message);
+      } else {
+        setGeneralError("Invalid verification code.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (requiresSecondFactor) {
+    return (
+      <form onSubmit={handleSecondFactor} className="space-y-5">
+        <div className="space-y-2">
+          <label className="ml-1 text-sm font-semibold text-slate-700">
+            Verification Code
+          </label>
+          <input
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 px-4 text-slate-900 outline-none transition-all focus:border-[#ec5b13] focus:ring-2 focus:ring-[#ec5b13]/20"
+            placeholder="Enter email code"
+            value={secondFactorCode}
+            onChange={(e) => setSecondFactorCode(e.target.value)}
+            required
+          />
+          <p className="text-xs text-slate-500">
+            We sent a verification code to your email.
+          </p>
+        </div>
+
+        {generalError && <p className="text-sm text-red-500">{generalError}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#ec5b13] py-3.5 font-bold text-white shadow-lg shadow-[#ec5b13]/20 transition-all hover:bg-[#d95310] disabled:opacity-60"
+        >
+          {loading ? "Verifying..." : "Verify and Sign In"}
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={handleSignin} className="space-y-5">
