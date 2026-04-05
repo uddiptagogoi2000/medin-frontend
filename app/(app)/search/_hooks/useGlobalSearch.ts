@@ -2,6 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/utils/api";
 
 export interface SearchUser {
   clerk_id: string;
@@ -48,7 +49,7 @@ export function useGlobalSearch(keyword?: string, limit = 5) {
         limit: String(limit),
       });
 
-      const response = await fetch(`http://localhost:8000/search/?${params}`, {
+      const response = await fetch(apiUrl(`/search/?${params}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

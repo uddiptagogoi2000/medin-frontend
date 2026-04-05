@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@heroui/avatar";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { apiUrl } from "@/utils/api";
 
 interface SuggestedDoctor {
   clerk_id: string;
@@ -32,14 +33,11 @@ export default function SuggestedDoctors() {
     try {
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(
-        "http://localhost:8000/follows/suggestions",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(apiUrl("/follows/suggestions"), {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
       setDoctors(data);
@@ -56,7 +54,7 @@ export default function SuggestedDoctors() {
 
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(`http://localhost:8000/follows/${clerkId}`, {
+      const response = await fetch(apiUrl(`/follows/${clerkId}`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -29,6 +29,7 @@ import {
 import { Button } from "@heroui/button";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiUrl } from "@/utils/api";
 
 dayjs.extend(relativeTime);
 
@@ -113,7 +114,7 @@ export default function CommentItem({ postId, comment, onDeleted }: CommentItemP
       const token = await getToken({ template: "backend" });
 
       const response = await fetch(
-        `http://localhost:8000/posts/${postId}/comment/${comment.id}`,
+        apiUrl(`/posts/${postId}/comment/${comment.id}`),
         {
           method: "DELETE",
           headers: {
@@ -176,7 +177,7 @@ export default function CommentItem({ postId, comment, onDeleted }: CommentItemP
       const token = await getToken({ template: "backend" });
 
       const response = await fetch(
-        `http://localhost:8000/posts/${postId}/comment/${comment.id}`,
+        apiUrl(`/posts/${postId}/comment/${comment.id}`),
         {
           method: "PUT",
           headers: {

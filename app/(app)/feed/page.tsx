@@ -11,6 +11,7 @@ import UserSummaryCardSkeleton from "@/components/skeletons/UserSummaryCardSkele
 import EngagementPromptModal, {
   EngagementPrompt,
 } from "./_components/EngagementPromptModal";
+import { apiUrl } from "@/utils/api";
 
 type PromptEventType = "shown" | "dismissed" | "clicked_post" | "posted";
 
@@ -65,7 +66,7 @@ export default function FeedPage() {
     const fetchPrompt = async () => {
       try {
         const token = await getToken({ template: "backend" });
-        const response = await fetch("http://localhost:8000/engagement/prompts/next", {
+        const response = await fetch(apiUrl("/engagement/prompts/next"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -261,7 +262,7 @@ export default function FeedPage() {
   async function trackPromptEvent(promptId: number, eventType: PromptEventType) {
     try {
       const token = await getToken({ template: "backend" });
-      await fetch(`http://localhost:8000/engagement/prompts/${promptId}/event`, {
+      await fetch(apiUrl(`/engagement/prompts/${promptId}/event`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

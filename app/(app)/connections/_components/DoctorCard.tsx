@@ -4,6 +4,7 @@ import { Avatar } from "@heroui/avatar";
 import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { EllipsisVertical, MapPin, Share2 } from "lucide-react";
+import { apiUrl } from "@/utils/api";
 
 interface Doctor {
   clerk_id: string;
@@ -31,15 +32,12 @@ export default function DoctorCard({ doctor, onFollow }: DoctorCardProps) {
 
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(
-        `http://localhost:8000/follows/${doctor.clerk_id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(apiUrl(`/follows/${doctor.clerk_id}`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
 

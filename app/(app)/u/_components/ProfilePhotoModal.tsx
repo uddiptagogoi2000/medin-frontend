@@ -5,6 +5,7 @@ import { Button } from "@heroui/button";
 import { useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Avatar } from "@heroui/avatar";
+import { apiUrl } from "@/utils/api";
 
 interface Props {
   isOpen: boolean;
@@ -46,7 +47,7 @@ export default function ProfilePhotoModal({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:8000/profile/avatar", {
+      const res = await fetch(apiUrl("/profile/avatar"), {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -76,7 +77,7 @@ export default function ProfilePhotoModal({
     try {
       const token = await getToken({ template: "backend" });
 
-      await fetch("http://localhost:8000/profile/avatar", {
+      await fetch(apiUrl("/profile/avatar"), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

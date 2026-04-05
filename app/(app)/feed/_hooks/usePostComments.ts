@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
+import { apiUrl } from "@/utils/api";
 
 const COMMENTS_LIMIT = 5;
 
@@ -15,9 +16,11 @@ export function usePostComments(postId: string, enabled: boolean) {
       const token = await getToken({ template: "backend" });
 
       const response = await fetch(
-        `http://localhost:8000/posts/${postId}/comments?skip=${
-          pageParam * COMMENTS_LIMIT
-        }&limit=${COMMENTS_LIMIT}`,
+        apiUrl(
+          `/posts/${postId}/comments?skip=${
+            pageParam * COMMENTS_LIMIT
+          }&limit=${COMMENTS_LIMIT}`,
+        ),
         {
           headers: {
             Authorization: `Bearer ${token}`,

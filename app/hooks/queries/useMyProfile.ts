@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
+import { apiUrl } from "@/utils/api";
 
 export function useMyProfile() {
   const { getToken } = useAuth();
@@ -11,7 +12,7 @@ export function useMyProfile() {
     queryFn: async () => {
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch("http://localhost:8000/profile/me", {
+      const res = await fetch(apiUrl("/profile/me"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

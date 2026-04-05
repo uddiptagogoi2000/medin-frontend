@@ -49,6 +49,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@heroui/button";
 import CreatePostModal from "./CreatePostModal";
 import { addToast } from "@heroui/toast";
+import { apiUrl } from "@/utils/api";
 
 dayjs.extend(relativeTime);
 
@@ -165,7 +166,7 @@ const PostCard = ({
       console.log("mutation called");
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch(`http://localhost:8000/posts/${postId}`, {
+      const res = await fetch(apiUrl(`/posts/${postId}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -210,7 +211,7 @@ const PostCard = ({
     mutationFn: async () => {
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch(`http://localhost:8000/posts/${post.id}/repost`, {
+      const res = await fetch(apiUrl(`/posts/${post.id}/repost`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -718,7 +719,7 @@ const PostCard = ({
     try {
       const token = await getToken({ template: "backend" });
 
-      await fetch(`http://localhost:8000/posts/${post.id}/like`, {
+      await fetch(apiUrl(`/posts/${post.id}/like`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -739,15 +740,12 @@ const PostCard = ({
     try {
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(
-        `http://localhost:8000/follows/${post.author.clerk_id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(apiUrl(`/follows/${post.author.clerk_id}`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
 

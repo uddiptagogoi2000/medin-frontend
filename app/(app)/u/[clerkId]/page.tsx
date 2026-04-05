@@ -7,6 +7,7 @@ import ProfileHeader from "../_components/ProfileHeader";
 import AboutSection from "../_components/AboutSection";
 import ExperienceSection from "../_components/ExperienceSection";
 import RecentPostsPanel from "../_components/RecentPostsPanel";
+import { apiUrl } from "@/utils/api";
 
 export default function ProfilePage() {
   const { clerkId } = useParams();
@@ -28,7 +29,7 @@ export default function ProfilePage() {
     try {
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch(`http://localhost:8000/profile/${clerkId}`, {
+      const res = await fetch(apiUrl(`/profile/${clerkId}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -7,6 +7,7 @@ import PostCard from "../../feed/_components/PostCard";
 import PostCardSkeleton from "@/components/skeletons/PostCardSkeleton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { apiUrl } from "@/utils/api";
 
 import "swiper/css";
 
@@ -66,14 +67,11 @@ export default function RecentPostsPanel({
 
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch(
-        `http://localhost:8000/profile/${clerkId}/activity/posts`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await fetch(apiUrl(`/profile/${clerkId}/activity/posts`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!res.ok) throw new Error("Failed to fetch posts");
 

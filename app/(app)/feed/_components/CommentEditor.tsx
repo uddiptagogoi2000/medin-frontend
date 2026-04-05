@@ -14,6 +14,7 @@ import { ImageIcon, X } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyProfile } from "@/app/hooks/queries/useMyProfile";
+import { apiUrl } from "@/utils/api";
 
 interface CommentEditorProps {
   postId: string;
@@ -42,17 +43,14 @@ export default function CommentEditor({
     mutationFn: async (content: any) => {
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(
-        `http://localhost:8000/posts/${postId}/comment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content }),
+      const response = await fetch(apiUrl(`/posts/${postId}/comment`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ content }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to post comment");
@@ -249,7 +247,7 @@ export default function CommentEditor({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:8000/upload/image", {
+      const response = await fetch(apiUrl("/upload/image"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

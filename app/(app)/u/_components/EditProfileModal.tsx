@@ -11,6 +11,7 @@ import {
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { apiUrl } from "@/utils/api";
 
 interface Props {
   isOpen: boolean;
@@ -47,7 +48,7 @@ export default function EditProfileModal({
       const token = await getToken({ template: "backend" });
 
       // 1️⃣ Update Clerk Identity
-      await fetch("http://localhost:8000/profile/identity", {
+      await fetch(apiUrl("/profile/identity"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -60,7 +61,7 @@ export default function EditProfileModal({
       });
 
       // 2️⃣ Update DB Professional Info
-      const res = await fetch("http://localhost:8000/profile/basic", {
+      const res = await fetch(apiUrl("/profile/basic"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

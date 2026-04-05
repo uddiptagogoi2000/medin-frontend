@@ -2,6 +2,7 @@
 
 import { useSignUp, useAuth } from "@clerk/nextjs";
 import { useState } from "react";
+import { apiUrl } from "@/utils/api";
 
 export default function SignupForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -95,7 +96,7 @@ export default function SignupForm() {
 
         console.log("TOKEN:", token);
 
-        const response = await fetch("http://localhost:8000/users/onboard", {
+        const response = await fetch(apiUrl("/users/onboard"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

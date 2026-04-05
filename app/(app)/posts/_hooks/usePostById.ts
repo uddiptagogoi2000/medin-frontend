@@ -2,6 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/utils/api";
 
 export function usePostById(postId?: string) {
   const { getToken } = useAuth();
@@ -12,7 +13,7 @@ export function usePostById(postId?: string) {
     queryFn: async () => {
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(`http://localhost:8000/posts/${postId}`, {
+      const response = await fetch(apiUrl(`/posts/${postId}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

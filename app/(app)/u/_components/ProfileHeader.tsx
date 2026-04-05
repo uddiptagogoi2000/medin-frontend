@@ -8,6 +8,7 @@ import { Avatar } from "@heroui/avatar";
 import { Modal, ModalBody, ModalContent } from "@heroui/modal";
 import { MapPin, ShieldCheck } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
+import { apiUrl } from "@/utils/api";
 
 interface Props {
   profile: any;
@@ -179,15 +180,12 @@ export default function ProfileHeader({ profile, isOwn, setProfile }: Props) {
     try {
       const token = await getToken({ template: "backend" });
 
-      const response = await fetch(
-        `http://localhost:8000/follows/${identity.clerk_id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(apiUrl(`/follows/${identity.clerk_id}`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Failed to update follow");

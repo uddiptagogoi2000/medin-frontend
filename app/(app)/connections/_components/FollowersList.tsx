@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import DoctorCard from "./DoctorCard";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { apiUrl } from "@/utils/api";
 
 export default function FollowersList() {
   const { getToken } = useAuth();
@@ -20,7 +21,7 @@ export default function FollowersList() {
     try {
       const token = await getToken({ template: "backend" });
 
-      const res = await fetch("http://localhost:8000/connections/followers", {
+      const res = await fetch(apiUrl("/connections/followers"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

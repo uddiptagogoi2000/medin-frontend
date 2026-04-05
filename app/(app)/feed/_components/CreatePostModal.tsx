@@ -31,6 +31,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import TagInput from "./TagInput";
 import { useMyProfile } from "@/app/hooks/queries/useMyProfile";
+import { apiUrl } from "@/utils/api";
 
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
@@ -240,7 +241,7 @@ export default function CreatePostModal({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:8000/upload/image", {
+      const response = await fetch(apiUrl("/upload/image"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -352,8 +353,8 @@ export default function CreatePostModal({
 
       const response = await fetch(
         isEditMode
-          ? `http://localhost:8000/posts/${postId}`
-          : "http://localhost:8000/posts/",
+          ? apiUrl(`/posts/${postId}`)
+          : apiUrl("/posts/"),
         {
           method: isEditMode ? "PUT" : "POST",
           headers: {
