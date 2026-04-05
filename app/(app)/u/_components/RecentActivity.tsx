@@ -14,17 +14,20 @@ export default function RecentActivity({ clerkId }: Props) {
 
   const [activeTab, setActiveTab] = useState("all");
   const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [reposts, setReposts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingReposts, setLoadingReposts] = useState(false);
 
   useEffect(() => {
     if (clerkId) {
       fetchPosts();
+      fetchReposts();
     }
   }, [clerkId]);
 
   async function fetchPosts() {
     try {
-      setLoading(true);
+      setLoadingPosts(true);
 
       const token = await getToken({ template: "backend" });
 
@@ -45,7 +48,34 @@ export default function RecentActivity({ clerkId }: Props) {
       console.error("Activity fetch failed:", err);
       setPosts([]);
     } finally {
-      setLoading(false);
+      setLoadingPosts(false);
+    }
+  }
+
+  async function fetchReposts() {
+    try {
+      setLoadingReposts(true);
+
+      const token = await getToken({ template: "backend" });
+
+      const res = await fetch(
+        `http://localhost:8000/profile/${clerkId}/activity/reposts`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch reposts");
+
+      const data = await res.json();
+      setReposts(data);
+    } catch (err) {
+      console.error("Repost activity fetch failed:", err);
+      setReposts([]);
+    } finally {
+      setLoadingReposts(false);
     }
   }
 
@@ -59,43 +89,59 @@ export default function RecentActivity({ clerkId }: Props) {
       >
         <Tab key="all" title="All" />
         <Tab key="posts" title="Posts" />
+        <Tab key="reposts" title="Reposts" />
         <Tab key="comments" title="Comments" isDisabled />
         <Tab key="likes" title="Likes" isDisabled />
       </Tabs>
 
       <div className="mt-6 space-y-6">
-        {loading && (
+        {(loadingPosts || loadingReposts) && (
           <div className="text-gray-500 text-sm">Loading activity...</div>
         )}
 
-        {!loading && (activeTab === "all" || activeTab === "posts") && (
+        {!loadingPosts && !loadingReposts && activeTab === "all" && (
           <>
-            {posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={{
-                    id: String(post.id),
-                    author: {
-                      name: post.is_anonymous ? "Anonymous Doctor" : "Doctor",
-                      avatar: "",
-                      title: "",
-                      clerk_id: post.author_clerk_id,
-                    },
-                    content: post.content,
-                    previewText: post.preview_text ?? "",
-                    firstImage: post.first_image,
-                    createdAt: new Date(post.created_at).toLocaleString(),
-                    likeCount: post.like_count ?? 0,
-                    commentCount: post.comment_count ?? 0,
-                    isLiked: false,
-                    isFollowingAuthor: false,
-                  }}
-                />
-              ))
-            ) : (
+            {posts.length > 0 && (
+              <div className="space-y-6">
+                <h4 className="text-sm font-semibold text-gray-700">Posts</h4>
+                {renderPosts(posts, "post")}
+              </div>
+            )}
+
+            {reposts.length > 0 && (
+              <div className="space-y-6">
+                <h4 className="text-sm font-semibold text-gray-700">Reposts</h4>
+                {renderPosts(reposts, "repost")}
+              </div>
+            )}
+
+            {posts.length === 0 && reposts.length === 0 && (
               <div className="text-center text-gray-500 py-12">
                 No activity yet.
+              </div>
+            )}
+          </>
+        )}
+
+        {!loadingPosts && activeTab === "posts" && (
+          <>
+            {posts.length > 0 ? (
+              renderPosts(posts, "post")
+            ) : (
+              <div className="text-center text-gray-500 py-12">
+                No post activity yet.
+              </div>
+            )}
+          </>
+        )}
+
+        {!loadingReposts && activeTab === "reposts" && (
+          <>
+            {reposts.length > 0 ? (
+              renderPosts(reposts, "repost")
+            ) : (
+              <div className="text-center text-gray-500 py-12">
+                No repost activity yet.
               </div>
             )}
           </>
@@ -103,4 +149,39 @@ export default function RecentActivity({ clerkId }: Props) {
       </div>
     </div>
   );
+
+  function renderPosts(activityPosts: any[], keyPrefix: string) {
+    return activityPosts.map((post, index) => (
+      <PostCard
+        key={`${keyPrefix}-${post.id}-${index}`}
+        post={{
+          id: String(post.id),
+          title: post.title ?? "",
+          author: {
+            name: post.is_anonymous
+              ? "Anonymous Doctor"
+              : (post.author_name ?? "Doctor"),
+            avatar: post.is_anonymous ? "" : (post.author_avatar ?? ""),
+            title: post.author_specialization
+              ? `${post.author_specialization} · ${post.author_hospital || ""}`.trim()
+              : post.author_hospital || undefined,
+            clerk_id: post.author_clerk_id,
+          },
+          content: post.content ?? {},
+          previewText: post.preview_text ?? "",
+          firstImage: post.first_image,
+          createdAt: post.created_at,
+          likeCount: post.like_count ?? 0,
+          commentCount: post.comment_count ?? 0,
+          repostCount: post.repost_count ?? 0,
+          isLiked: post.is_liked_by_me ?? false,
+          isReposted: post.is_reposted_by_me ?? false,
+          isFollowingAuthor: post.is_following_author ?? false,
+          isAnonymous: post.is_anonymous ?? false,
+          visibility: post.visibility,
+          tags: post.tags ?? [],
+        }}
+      />
+    ));
+  }
 }

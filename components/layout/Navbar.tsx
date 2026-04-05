@@ -29,11 +29,6 @@ const navItems = [
     href: "/connections",
     icon: Users,
   },
-  {
-    label: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-  },
 ];
 
 interface AppNavbarProps {
@@ -134,12 +129,12 @@ const AppNavbar = ({ onSearchFocusChange }: AppNavbarProps) => {
 
   return (
     <Navbar
-      className="z-50 bg-white"
+      className="z-50 bg-white/95 backdrop-blur border-b border-default-200"
       classNames={{
-        wrapper: "max-w-6xl",
+        wrapper: "max-w-7xl",
       }}
     >
-      <p className="font-bold text-inherit">MedIn</p>
+      <p className="font-extrabold tracking-tight text-primary">MedIn</p>
       <NavbarContent justify="start" className="flex-1 max-w-xl">
         <div
           ref={searchWrapperRef}
@@ -206,7 +201,7 @@ const AppNavbar = ({ onSearchFocusChange }: AppNavbarProps) => {
               inputWrapper: `
                 h-full 
                 rounded-full 
-                bg-gray-100
+                bg-default-100
                 px-4
                 transition-all 
                 duration-300
@@ -289,11 +284,21 @@ const AppNavbar = ({ onSearchFocusChange }: AppNavbarProps) => {
       <NavbarContent justify="end" className="gap-6">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Tooltip content={item.label} key={item.href}>
               <NavbarItem>
-                <Link href={item.href} className="flex items-center">
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-600 hover:bg-default-100 hover:text-gray-900"
+                  }`}
+                >
                   <Icon size={22} />
                 </Link>
               </NavbarItem>

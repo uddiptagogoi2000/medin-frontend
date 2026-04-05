@@ -1,11 +1,13 @@
 "use client";
 
 import { Button } from "@heroui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EditProfileModal from "./EditProfileModal";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import { Avatar } from "@heroui/avatar";
+import { Modal, ModalBody, ModalContent } from "@heroui/modal";
 import { MapPin, ShieldCheck } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 interface Props {
   profile: any;
@@ -15,8 +17,22 @@ interface Props {
 
 export default function ProfileHeader({ profile, isOwn, setProfile }: Props) {
   const { identity, basic, stats } = profile;
+  const { getToken } = useAuth();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
+  const [isFollowPending, setIsFollowPending] = useState(false);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
+
+  useEffect(() => {
+    setIsFollowing(
+      Boolean(
+        profile?.is_following ??
+          profile?.is_following_author ??
+          profile?.relationship?.is_following,
+      ),
+    );
+  }, [profile]);
 
   return (
     <>
@@ -76,14 +92,15 @@ export default function ProfileHeader({ profile, isOwn, setProfile }: Props) {
                   Edit profile
                 </Button>
               ) : (
-                <>
-                  <Button size="sm" variant="flat">
-                    Message
-                  </Button>
-                  <Button size="sm" color="primary">
-                    Follow
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  color={isFollowing ? "default" : "primary"}
+                  variant={isFollowing ? "flat" : "solid"}
+                  isDisabled={isFollowPending}
+                  onPress={handleFollowButtonPress}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
               )}
             </div>
           </div>
@@ -110,8 +127,82 @@ export default function ProfileHeader({ profile, isOwn, setProfile }: Props) {
         profile={profile}
         setProfile={setProfile}
       />
+
+      <Modal
+        isOpen={showUnfollowModal}
+        onOpenChange={() => setShowUnfollowModal(false)}
+      >
+        <ModalContent>
+          <ModalBody className="p-6 space-y-4">
+            <p className="text-center">
+              Unfollow <span className="font-semibold">{identity?.name}</span>?
+            </p>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowUnfollowModal(false)}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleFollowToggle}
+                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+              >
+                Unfollow
+              </button>
+            </div>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </>
   );
+
+  function handleFollowButtonPress() {
+    if (isFollowing) {
+      setShowUnfollowModal(true);
+      return;
+    }
+    handleFollowToggle();
+  }
+
+  async function handleFollowToggle() {
+    if (!identity?.clerk_id || isFollowPending) return;
+
+    const previous = isFollowing;
+    const next = !previous;
+
+    setIsFollowing(next);
+    setIsFollowPending(true);
+
+    try {
+      const token = await getToken({ template: "backend" });
+
+      const response = await fetch(
+        `http://localhost:8000/follows/${identity.clerk_id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update follow");
+      }
+
+      const data = await response.json();
+      setIsFollowing(Boolean(data?.following));
+      setShowUnfollowModal(false);
+    } catch (error) {
+      console.error("Follow toggle failed:", error);
+      setIsFollowing(previous);
+    } finally {
+      setIsFollowPending(false);
+    }
+  }
 }
 
 function Stat({ label, value }: any) {

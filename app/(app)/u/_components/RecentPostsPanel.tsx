@@ -27,6 +27,7 @@ interface ProfilePost {
   created_at: string;
   like_count?: number;
   comment_count?: number;
+  repost_count?: number;
   is_anonymous?: boolean;
   author_clerk_id?: string;
   author_name?: string | null;
@@ -34,6 +35,7 @@ interface ProfilePost {
   author_specialization?: string | null;
   author_hospital?: string | null;
   is_liked_by_me?: boolean;
+  is_reposted_by_me?: boolean;
   is_following_author?: boolean;
   visibility?: string;
   tags?: string[];
@@ -152,6 +154,7 @@ export default function RecentPostsPanel({
                   contentClickNavigate
                   moreBehavior="navigate"
                   commentBehavior="navigate"
+                  showFollowButton={false}
                   post={{
                     id: String(post.id),
                     title: post.title ?? "",
@@ -173,7 +176,9 @@ export default function RecentPostsPanel({
                     createdAt: post.created_at,
                     likeCount: post.like_count ?? 0,
                     commentCount: post.comment_count ?? 0,
+                    repostCount: post.repost_count ?? 0,
                     isLiked: post.is_liked_by_me ?? false,
+                    isReposted: post.is_reposted_by_me ?? false,
                     isFollowingAuthor: post.is_following_author ?? false,
                     isAnonymous: post.is_anonymous ?? false,
                     visibility: post.visibility,
@@ -201,6 +206,7 @@ export default function RecentPostsPanel({
               contentClickNavigate
               moreBehavior="navigate"
               commentBehavior="navigate"
+              showFollowButton={false}
               post={{
                 id: String(post.id),
                 title: post.title ?? "",
@@ -220,7 +226,9 @@ export default function RecentPostsPanel({
                 createdAt: post.created_at,
                 likeCount: post.like_count ?? 0,
                 commentCount: post.comment_count ?? 0,
+                repostCount: post.repost_count ?? 0,
                 isLiked: post.is_liked_by_me ?? false,
+                isReposted: post.is_reposted_by_me ?? false,
                 isFollowingAuthor: post.is_following_author ?? false,
                 isAnonymous: post.is_anonymous ?? false,
                 visibility: post.visibility,

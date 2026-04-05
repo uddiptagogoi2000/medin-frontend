@@ -9,9 +9,14 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
-import { Chip } from "@heroui/chip";
 import { RadioGroup, Radio } from "@heroui/radio";
+import { Avatar } from "@heroui/avatar";
+import {
+  Dropdown,
+  DropdownMenu,
+  DropdownItem,
+  DropdownTrigger,
+} from "@heroui/dropdown";
 import {
   useEditor,
   EditorContent,
@@ -21,15 +26,43 @@ import {
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
-import { X, ImageIcon } from "lucide-react";
+import { X, ImageIcon, Globe, ChevronDown, Users, Lock } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
+import TagInput from "./TagInput";
+import { useMyProfile } from "@/app/hooks/queries/useMyProfile";
+
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+
+function sanitizeTags(tags: string[] = []) {
+  const result: string[] = [];
+
+  for (const rawTag of tags) {
+    const normalized = rawTag.trim().toLowerCase();
+    if (!normalized) continue;
+    if (normalized.length > MAX_TAG_LENGTH) continue;
+    if (result.includes(normalized)) continue;
+    result.push(normalized);
+    if (result.length >= MAX_TAGS) break;
+  }
+
+  return result;
+}
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode?: "create" | "edit";
   postId?: string;
+  onPostCreated?: (post: any) => void;
+  initialDraft?: {
+    title?: string;
+    body?: string;
+    tags?: string[];
+    visibility?: string;
+    isAnonymous?: boolean;
+  };
   initialPost?: {
     title?: string;
     content?: any;
@@ -44,12 +77,15 @@ export default function CreatePostModal({
   onClose,
   mode = "create",
   postId,
+  onPostCreated,
+  initialDraft,
   initialPost,
 }: CreatePostModalProps) {
   const { getToken } = useAuth();
+  const { data: profile } = useMyProfile();
 
   const [title, setTitle] = useState("");
-  const [tags, setTags] = useState<string[]>(["Cardiology"]);
+  const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState("public");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +93,22 @@ export default function CreatePostModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const initializedForKeyRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
+
+  const buildDraftContent = (body?: string, fallbackTitle?: string) => {
+    const starterText = (body?.trim() || fallbackTitle?.trim() || "").trim();
+    if (!starterText) return "";
+
+    const lines = starterText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length === 0) return "";
+
+    return {
+      type: "doc",
+      content: lines.map((line) => ({
+        type: "paragraph",
+        content: [{ type: "text", text: line }],
+      })),
+    };
+  };
 
   /* =============================
      Image NodeView
@@ -141,7 +193,7 @@ export default function CreatePostModal({
 
     if (mode === "edit") {
       setTitle(initialPost?.title ?? "");
-      setTags(initialPost?.tags ?? []);
+      setTags(sanitizeTags(initialPost?.tags ?? []));
       setVisibility(initialPost?.visibility ?? "public");
       setIsAnonymous(initialPost?.isAnonymous ?? false);
       editor.commands.setContent(initialPost?.content ?? "");
@@ -149,13 +201,15 @@ export default function CreatePostModal({
       return;
     }
 
-    setTitle("");
-    setTags(["Cardiology"]);
-    setVisibility("public");
-    setIsAnonymous(false);
-    editor.commands.clearContent();
+    setTitle(initialDraft?.title ?? "");
+    setTags(sanitizeTags(initialDraft?.tags ?? []));
+    setVisibility(initialDraft?.visibility ?? "public");
+    setIsAnonymous(initialDraft?.isAnonymous ?? false);
+    editor.commands.setContent(
+      buildDraftContent(initialDraft?.body, initialDraft?.title),
+    );
     initializedForKeyRef.current = initKey;
-  }, [editor, isOpen, mode, postId, initialPost]);
+  }, [editor, isOpen, mode, postId, initialPost, initialDraft]);
 
   /* =============================
      Image Upload
@@ -181,6 +235,7 @@ export default function CreatePostModal({
 
     try {
       const token = await getToken({ template: "backend" });
+      const normalizedTags = sanitizeTags(tags);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -291,6 +346,7 @@ export default function CreatePostModal({
       setIsSubmitting(true);
 
       const token = await getToken({ template: "backend" });
+      const normalizedTags = sanitizeTags(tags);
 
       const isEditMode = mode === "edit" && !!postId;
 
@@ -307,7 +363,7 @@ export default function CreatePostModal({
           body: JSON.stringify({
             title,
             content: contentJSON,
-            tags,
+            tags: normalizedTags,
             visibility,
             is_anonymous: isAnonymous,
           }),
@@ -345,12 +401,13 @@ export default function CreatePostModal({
             pages: [[savedPost, ...firstPage], ...old.pages.slice(1)],
           };
         });
+        onPostCreated?.(savedPost);
       }
 
       // Reset state
       setTitle("");
       editor.commands.clearContent();
-      setTags(["Cardiology"]);
+      setTags([]);
       setVisibility("public");
       setIsAnonymous(false);
 
@@ -369,7 +426,7 @@ export default function CreatePostModal({
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose} size="5xl">
       <ModalContent>
-        <ModalHeader className="border-b">
+        <ModalHeader className="border-b border-default-200">
           <div className="text-lg font-semibold">
             {mode === "edit"
               ? "Edit Clinical Case"
@@ -380,12 +437,85 @@ export default function CreatePostModal({
         <ModalBody className="p-0">
           <div className="flex h-[500px]">
             {/* LEFT SIDE (2/3) */}
-            <div className="w-2/3 p-6 border-r flex flex-col overflow-y-auto">
+            <div className="w-2/3 p-6 border-r border-default-200 flex flex-col overflow-y-auto">
+              <div className="flex items-center justify-between gap-3 mb-5 pb-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      size="md"
+                      src={
+                        isAnonymous
+                          ? undefined
+                          : (profile?.identity?.avatar ?? undefined)
+                      }
+                      name={
+                        isAnonymous
+                          ? "Anonymous Doctor"
+                          : (profile?.identity?.name ?? "User")
+                      }
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">
+                        {isAnonymous
+                          ? "Anonymous Doctor"
+                          : (profile?.identity?.name ?? "User")}
+                      </p>
+
+                      <Dropdown placement="bottom-start">
+                        <DropdownTrigger>
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-teal-600 transition-colors"
+                          >
+                            {visibility === "public" ? (
+                              <Globe className="w-3 h-3" />
+                            ) : visibility === "connections" ? (
+                              <Users className="w-3 h-3" />
+                            ) : (
+                              <Lock className="w-3 h-3" />
+                            )}
+                            <span className="capitalize">{visibility}</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </DropdownTrigger>
+                        <DropdownMenu
+                          aria-label="Post visibility"
+                          selectedKeys={new Set([visibility])}
+                          selectionMode="single"
+                          onSelectionChange={(keys) => {
+                            const next = Array.from(keys)[0];
+                            if (typeof next === "string") setVisibility(next);
+                          }}
+                        >
+                          <DropdownItem
+                            key="public"
+                            startContent={<Globe size={14} />}
+                          >
+                            Public
+                          </DropdownItem>
+                          <DropdownItem
+                            key="connections"
+                            startContent={<Users size={14} />}
+                          >
+                            Connections
+                          </DropdownItem>
+                          <DropdownItem
+                            key="private"
+                            startContent={<Lock size={14} />}
+                          >
+                            Private Draft
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
-                className="text-2xl font-semibold outline-none border-none mb-4"
+                className="text-2xl font-semibold outline-none border-none mb-5"
               />
 
               <div className="flex-1">
@@ -402,14 +532,13 @@ export default function CreatePostModal({
                 <p className="text-xs font-semibold text-gray-500 mb-2">
                   SPECIALTY TAGS
                 </p>
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {tags.map((tag) => (
-                    <Chip key={tag} color="primary" variant="flat">
-                      {tag}
-                    </Chip>
-                  ))}
-                </div>
-                <Input placeholder="Add specialty..." size="sm" />
+                <TagInput
+                  value={tags}
+                  onChange={setTags}
+                  maxTags={MAX_TAGS}
+                  maxTagLength={MAX_TAG_LENGTH}
+                  placeholder="Type a specialty..."
+                />
               </div>
 
               <div>
@@ -441,7 +570,7 @@ export default function CreatePostModal({
         </ModalBody>
 
         {/* FOOTER */}
-        <ModalFooter className="border-t flex justify-between">
+        <ModalFooter className="border-t border-default-200 flex justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => editor?.chain().focus().toggleBold().run()}

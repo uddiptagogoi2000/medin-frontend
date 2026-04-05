@@ -40,7 +40,13 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
       <HeroUIProvider navigate={router.push}>
-        <NextThemesProvider {...themeProps}>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="light"
+          forcedTheme="light"
+          enableSystem={false}
+          {...themeProps}
+        >
           <ToastProvider placement="bottom-left" />
           {children}
         </NextThemesProvider>

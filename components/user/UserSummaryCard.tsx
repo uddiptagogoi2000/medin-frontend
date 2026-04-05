@@ -32,7 +32,7 @@ export default function UserSummaryCard({
   return (
     <div
       onClick={() => router.push(`/u/${clerkId}`)}
-      className="bg-white rounded-xl overflow-hidden cursor-pointer transition duration-200 hover:shadow-lg hover:-translate-y-0.5"
+      className="bg-white border border-default-200 rounded-xl overflow-hidden cursor-pointer transition duration-200 hover:shadow-lg hover:-translate-y-0.5"
     >
       {/* Cover */}
       <div className="relative h-16 bg-gray-200 overflow-hidden">

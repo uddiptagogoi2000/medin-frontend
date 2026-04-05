@@ -10,6 +10,7 @@ import {
   Pencil,
   Repeat2,
   Send,
+  ThumbsUp,
   Trash2,
 } from "lucide-react";
 import {
@@ -68,7 +69,9 @@ interface Post {
   createdAt: string;
   likeCount?: number;
   commentCount?: number;
+  repostCount?: number;
   isLiked?: boolean;
+  isReposted?: boolean;
   isFollowingAuthor?: boolean;
   visibility?: string;
   isAnonymous?: boolean;
@@ -83,6 +86,7 @@ interface PostCardProps {
   moreBehavior?: "expand" | "navigate";
   commentBehavior?: "toggle" | "navigate";
   initialShowComments?: boolean;
+  showFollowButton?: boolean;
 }
 
 const PostCard = ({
@@ -109,10 +113,13 @@ const PostCard = ({
   moreBehavior = "expand",
   commentBehavior = "toggle",
   initialShowComments = false,
+  showFollowButton = true,
 }: PostCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post.likeCount ?? 0);
+  const [reposted, setReposted] = useState(post.isReposted ?? false);
+  const [repostCount, setRepostCount] = useState(post.repostCount ?? 0);
   const [isFollowing, setIsFollowing] = useState(
     post.isFollowingAuthor ?? false,
   );
@@ -146,6 +153,10 @@ const PostCard = ({
   const { user } = useUser();
   const myClerkId = user?.id;
   const router = useRouter();
+  const canRepost =
+    !post.isAnonymous &&
+    !!post.author?.clerk_id &&
+    post.author.clerk_id !== myClerkId;
 
   const queryClient = useQueryClient();
 
@@ -195,6 +206,91 @@ const PostCard = ({
     },
   });
 
+  const repostMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getToken({ template: "backend" });
+
+      const res = await fetch(`http://localhost:8000/posts/${post.id}/repost`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.message || "Failed to repost");
+      }
+
+      return data as { reposted?: boolean };
+    },
+    onMutate: async () => {
+      const nextReposted = !reposted;
+      const nextRepostCount = Math.max(
+        0,
+        repostCount + (nextReposted ? 1 : -1),
+      );
+
+      await queryClient.cancelQueries({ queryKey: ["feed"] });
+      await queryClient.cancelQueries({ queryKey: ["post", post.id] });
+
+      const previousFeed = queryClient.getQueryData(["feed"]);
+      const previousPost = queryClient.getQueryData(["post", post.id]);
+
+      setReposted(nextReposted);
+      setRepostCount(nextRepostCount);
+
+      queryClient.setQueryData(["feed"], (oldData: any) => {
+        if (!oldData?.pages) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any[]) =>
+            page.map((p: any) =>
+              String(p.id) === String(post.id)
+                ? {
+                    ...p,
+                    is_reposted_by_me: nextReposted,
+                    repost_count: nextRepostCount,
+                  }
+                : p,
+            ),
+          ),
+        };
+      });
+
+      queryClient.setQueryData(["post", post.id], (oldPost: any) => {
+        if (!oldPost) return oldPost;
+        return {
+          ...oldPost,
+          is_reposted_by_me: nextReposted,
+          repost_count: nextRepostCount,
+        };
+      });
+
+      return { previousFeed, previousPost, reposted, repostCount };
+    },
+    onError: (error, _vars, context) => {
+      queryClient.setQueryData(["feed"], context?.previousFeed);
+      queryClient.setQueryData(["post", post.id], context?.previousPost);
+
+      setReposted(context?.reposted ?? post.isReposted ?? false);
+      setRepostCount(context?.repostCount ?? post.repostCount ?? 0);
+
+      addToast({
+        title: "Unable to repost",
+        description:
+          error instanceof Error ? error.message : "Something went wrong.",
+        color: "danger",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["post", post.id] });
+    },
+  });
+
   const ImageComponent = (props: any) => {
     const { node } = props;
 
@@ -231,9 +327,11 @@ const PostCard = ({
 
   return (
     <>
-      <Card className={`w-full shadow-none rounded-2xl h-full flex flex-col ${className}`}>
+      <Card
+        className={`w-full rounded-2xl h-full flex flex-col border border-default-200 shadow-none ${className}`}
+      >
         {/* HEADER */}
-        <CardHeader className="flex justify-between items-start">
+        <CardHeader className="flex justify-between items-start pb-3">
           <div
             className={`flex gap-3 ${
               canOpenAuthorProfile ? "cursor-pointer" : "cursor-default"
@@ -310,30 +408,34 @@ const PostCard = ({
             </Dropdown>
           )}
           {/* Follow Button */}
-          {!post.isAnonymous && post.author?.clerk_id !== myClerkId && (
-            <button
-              onClick={() => {
-                if (isFollowing) {
-                  setShowUnfollowModal(true);
-                } else {
-                  handleFollowToggle();
-                }
-              }}
-              className={`text-xs font-medium px-3 py-1 rounded-full transition ${
-                isFollowing
-                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  : "bg-primary text-white hover:bg-primary-600"
-              }`}
-            >
-              {isFollowing ? "Following" : "Follow"}
-            </button>
-          )}
+          {showFollowButton &&
+            !post.isAnonymous &&
+            post.author?.clerk_id !== myClerkId && (
+              <button
+                onClick={() => {
+                  if (isFollowing) {
+                    setShowUnfollowModal(true);
+                  } else {
+                    handleFollowToggle();
+                  }
+                }}
+                className={`text-xs font-medium px-3 py-1 rounded-full transition ${
+                  isFollowing
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-primary text-white hover:bg-primary-600"
+                }`}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </button>
+            )}
         </CardHeader>
 
         {/* BODY */}
-        <CardBody className={`text-sm text-gray-700 pt-0 space-y-3 flex-1 ${compact ? "pb-3" : ""}`}>
+        <CardBody
+          className={`text-sm text-gray-700 pt-0 space-y-3 flex-1 ${compact ? "pb-3" : ""}`}
+        >
           <h3
-            className={`${compact ? "text-lg" : "text-[28px]"} font-bold leading-tight text-primary-700 ${
+            className={`${compact ? "text-base" : "text-[24px]"} font-bold leading-tight text-gray-900 ${
               contentClickNavigate ? "cursor-pointer hover:underline" : ""
             }`}
             onClick={() => {
@@ -389,11 +491,13 @@ const PostCard = ({
           </>
         </CardBody>
 
-        <div className={`px-4 pb-2 flex flex-wrap gap-2 ${compact ? "min-h-12" : ""}`}>
+        <div
+          className={`px-4 pb-2 flex flex-wrap gap-2 ${compact ? "min-h-12" : ""}`}
+        >
           {displayTags.map((tag) => (
             <span
               key={tag}
-              className="px-2.5 py-1 rounded-md bg-default-100 text-default-600 text-xs font-medium"
+              className="px-2.5 py-1 rounded-md bg-primary-50 text-primary-700 text-xs font-medium"
             >
               {tag}
             </span>
@@ -401,22 +505,24 @@ const PostCard = ({
         </div>
 
         {/* ACTION BAR */}
-        <CardFooter className="px-4 py-3 border-t border-default-100">
+        <CardFooter className="px-4 py-2 border-t border-default-100">
           <div className="flex w-full items-center justify-between text-sm text-gray-600">
             <div className="flex items-center gap-6">
-              <button
-                onClick={handleLike}
-                className={`flex items-center gap-2 transition ${
+              <Button
+                onPress={handleLike}
+                variant="flat"
+                className={`flex rounded-full items-center gap-2 transition ${
                   liked ? "text-primary font-medium" : "hover:text-primary"
                 }`}
               >
-                <Heart size={16} className={liked ? "fill-primary" : ""} />
+                <ThumbsUp size={16} className={liked ? "fill-primary" : ""} />
                 <span>{likeCount}</span>
-              </button>
+              </Button>
 
-              <button
-                className="flex items-center gap-2 transition hover:text-primary"
-                onClick={() => {
+              <Button
+                className="flex items-center rounded-full gap-2 transition hover:text-primary"
+                variant="flat"
+                onPress={() => {
                   if (commentBehavior === "navigate") {
                     router.push(`/posts/${post.id}?comments=1`);
                     return;
@@ -426,17 +532,31 @@ const PostCard = ({
               >
                 <MessageCircle size={16} />
                 <span>{commentCount}</span>
-              </button>
+              </Button>
 
-              <button className="flex items-center gap-2 transition hover:text-primary">
+              <Button
+                variant="flat"
+                className={`flex items-center rounded-full gap-2 transition ${
+                  reposted
+                    ? "text-primary font-medium"
+                    : canRepost
+                      ? "hover:text-primary"
+                      : "opacity-45 cursor-not-allowed"
+                }`}
+                onPress={handleRepost}
+                disabled={!canRepost || repostMutation.isPending}
+              >
                 <Repeat2 size={16} />
-                <span>0</span>
-              </button>
+                <span>{repostCount}</span>
+              </Button>
             </div>
 
-            <button className="flex items-center gap-2 transition hover:text-primary">
+            <Button
+              variant="flat"
+              className="flex items-center rounded-full gap-2 transition hover:text-primary"
+            >
               <Send size={16} />
-            </button>
+            </Button>
           </div>
         </CardFooter>
         {showComments && (
@@ -636,6 +756,11 @@ const PostCard = ({
     } catch (error) {
       console.error("Follow toggle failed:", error);
     }
+  }
+
+  function handleRepost() {
+    if (!canRepost || repostMutation.isPending) return;
+    repostMutation.mutate();
   }
 
   function handleEditPost() {

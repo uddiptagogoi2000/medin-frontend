@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import AppNavbar from "@/components/layout/Navbar";
+import dynamic from "next/dynamic";
+
+const AppNavbar = dynamic(() => import("@/components/layout/Navbar"), {
+  ssr: false,
+});
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-[#f6f9fb] relative">
       <AppNavbar onSearchFocusChange={setIsSearchFocused} />
 
       {/* MAIN CONTENT WRAPPER */}
@@ -20,7 +24,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         )}
 
         <div
-          className={`max-w-6xl mx-auto px-6 py-6 transition-all duration-300 ${
+          className={`max-w-7xl mx-auto px-6 py-6 transition-all duration-300 ${
             isSearchFocused ? "pointer-events-none select-none" : ""
           }`}
         >

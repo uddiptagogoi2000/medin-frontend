@@ -19,7 +19,9 @@ interface BackendPost {
   created_at: string;
   like_count: number;
   comment_count: number;
+  repost_count: number;
   is_liked_by_me: boolean;
+  is_reposted_by_me: boolean;
   is_following_author: boolean;
   tags?: string[];
   author_name: string;
@@ -86,7 +88,9 @@ export default function FeedList() {
             createdAt: post.created_at,
             likeCount: post.like_count,
             commentCount: post.comment_count,
+            repostCount: post.repost_count,
             isLiked: post.is_liked_by_me,
+            isReposted: post.is_reposted_by_me,
             isFollowingAuthor: post.is_following_author,
             visibility: post.visibility,
             isAnonymous: post.is_anonymous,

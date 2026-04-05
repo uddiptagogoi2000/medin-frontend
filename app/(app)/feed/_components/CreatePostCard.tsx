@@ -5,19 +5,45 @@ import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Image, Newspaper, Video } from "lucide-react";
 import CreatePostModal from "./CreatePostModal";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface CreatePostCardProps {
   avatarUrl?: string;
   name?: string;
+  isComposerOpen?: boolean;
+  onComposerOpenChange?: (isOpen: boolean) => void;
+  composerInitialDraft?: {
+    title?: string;
+    body?: string;
+    tags?: string[];
+    visibility?: string;
+    isAnonymous?: boolean;
+  };
+  onPostCreated?: (post: any) => void;
 }
 
-const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+const CreatePostCard = ({
+  avatarUrl,
+  name,
+  isComposerOpen,
+  onComposerOpenChange,
+  composerInitialDraft,
+  onPostCreated,
+}: CreatePostCardProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const controlled = typeof isComposerOpen === "boolean";
+  const open = controlled ? isComposerOpen : internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    if (controlled) {
+      onComposerOpenChange?.(nextOpen);
+      return;
+    }
+    setInternalOpen(nextOpen);
+  };
 
   return (
     <>
-      <Card className="max-w-full shadow-none">
+      <Card className="max-w-full shadow-none border border-default-200">
         <CardHeader className="justify-between">
           <div className="flex gap-3 w-full items-center">
             <Avatar
@@ -28,7 +54,7 @@ const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
             />
             <Input
               readOnly
-              onClick={() => setIsOpen(true)}
+              onClick={() => setOpen(true)}
               classNames={{
                 inputWrapper: `
                 rounded-full`,
@@ -44,7 +70,7 @@ const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
               variant="light"
               className="flex-1 rounded-none py-2 text-sm"
               startContent={<Video />}
-              onPress={() => setIsOpen(true)}
+              onPress={() => setOpen(true)}
             >
               Video
             </Button>
@@ -53,7 +79,7 @@ const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
               variant="light"
               className="flex-1 rounded-none py-2 text-sm"
               startContent={<Image />}
-              onPress={() => setIsOpen(true)}
+              onPress={() => setOpen(true)}
             >
               Photo
             </Button>
@@ -62,7 +88,7 @@ const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
               variant="light"
               className="flex-1 rounded-none py-2 text-sm"
               startContent={<Newspaper />}
-              onPress={() => setIsOpen(true)}
+              onPress={() => setOpen(true)}
             >
               Write article
             </Button>
@@ -70,7 +96,12 @@ const CreatePostCard = ({ avatarUrl, name }: CreatePostCardProps) => {
         </CardFooter>
       </Card>
 
-      <CreatePostModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <CreatePostModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        initialDraft={composerInitialDraft}
+        onPostCreated={onPostCreated}
+      />
     </>
   );
 };

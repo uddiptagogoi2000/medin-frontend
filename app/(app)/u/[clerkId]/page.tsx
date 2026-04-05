@@ -57,27 +57,25 @@ export default function ProfilePage() {
         setProfile={setProfile}
       />
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="lg:col-span-3 space-y-6">
-          <AboutSection
-            profile={profile}
-            isOwn={isOwnProfile}
-            setProfile={setProfile}
-          />
+      <div className="space-y-6">
+        <AboutSection
+          profile={profile}
+          isOwn={isOwnProfile}
+          setProfile={setProfile}
+        />
 
-          <RecentPostsPanel
-            clerkId={clerkId as string}
-            variant="slider"
-            limit={8}
-            showViewAll
-          />
+        <RecentPostsPanel
+          clerkId={clerkId as string}
+          variant="slider"
+          limit={8}
+          showViewAll
+        />
 
-          <ExperienceSection
-            profile={profile}
-            isOwn={isOwnProfile}
-            setProfile={setProfile}
-          />
-        </div>
+        <ExperienceSection
+          profile={profile}
+          isOwn={isOwnProfile}
+          setProfile={setProfile}
+        />
       </div>
     </div>
   );

@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PostCard from "@/app/(app)/feed/_components/PostCard";
 import PostCardSkeleton from "@/components/skeletons/PostCardSkeleton";
 import SearchUserItem from "../../_components/SearchUserItem";
 import { useGlobalSearch } from "../../_hooks/useGlobalSearch";
 
-export default function SearchResultsContentPage() {
+function SearchResultsContentPageInner() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") ?? "";
   const type = searchParams.get("type") === "users" ? "users" : "posts";
@@ -104,5 +105,24 @@ export default function SearchResultsContentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SearchResultsContentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-6 gap-6">
+            <div className="col-span-4 space-y-4">
+              <PostCardSkeleton />
+              <PostCardSkeleton />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <SearchResultsContentPageInner />
+    </Suspense>
   );
 }

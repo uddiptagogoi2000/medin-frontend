@@ -9,6 +9,17 @@
 @theme {
     --font-sans: "font", sans-serif;
     --font-mono: "monospace", monospace;
+    --color-brand-primary: #007B83;
+    --color-brand-secondary: #5C7D80;
+    --color-brand-tertiary: #A05F2E;
+    --color-brand-bg: #F8FAFC;
+    --color-brand-surface: #FFFFFF;
+    --color-brand-border: #DCE7EA;
+}
+
+body {
+  background: var(--color-brand-bg);
+  color: #1f2937;
 }
 
 .ProseMirror img[data-uploading="true"] {
@@ -40,4 +51,8 @@
 
 .recent-posts-swiper .swiper-slide {
   height: auto;
+}
+
+.surface-card {
+  @apply rounded-2xl bg-white border border-default-200 shadow-sm;
 }

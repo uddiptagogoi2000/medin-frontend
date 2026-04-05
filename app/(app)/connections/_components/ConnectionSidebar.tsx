@@ -1,12 +1,14 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Sparkles, Users, UserRoundCheck, LayoutGrid } from "lucide-react";
 
-export default function ConnectionsSidebar() {
+interface ConnectionsSidebarProps {
+  tab?: string;
+}
+
+export default function ConnectionsSidebar({ tab }: ConnectionsSidebarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("tab");
 
   const isFollowers = tab === "followers";
   const isFollowing = tab === "following";
