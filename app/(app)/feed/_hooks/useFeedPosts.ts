@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
+import { apiUrl } from "@/utils/api";
 
 const LIMIT = 2;
 
@@ -15,12 +16,12 @@ export function useFeedPosts() {
       const token = await getToken({ template: "backend" });
 
       const res = await fetch(
-        `http://localhost:8000/posts?skip=${pageParam}&limit=${LIMIT}`,
+        apiUrl(`/posts?skip=${pageParam}&limit=${LIMIT}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to fetch posts");
