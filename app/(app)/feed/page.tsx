@@ -32,30 +32,26 @@ export default function FeedPage() {
   const promptShownTrackedRef = useRef(false);
   const ignoreNextPromptCloseRef = useRef(false);
   const showPromptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const topPosts = [
+  const topArticles = [
     {
-      title: "AI-guided ECG triage reducing ER wait time",
-      time: "2h ago",
-      likes: 84,
-      comments: 19,
+      title:
+        "The Entry of Technologies into Tuberculosis and Integrated Lung Health",
+      href: "https://www.expresshealthcare.in/blogs/guest-blogs-healthcare/the-entry-of-technologies-into-tuberculosis-and-integrated-lung-health/453235/",
     },
     {
-      title: "How we redesigned sepsis alert handoff protocols",
-      time: "5h ago",
-      likes: 61,
-      comments: 12,
+      title:
+        "Caregiver Capital: The Invisible Workforce Powering Cancer Care",
+      href: "https://www.expresshealthcare.in/news/caregiver-capital-the-invisible-workforce-powering-cancer-care/453122/",
     },
     {
-      title: "Case insight: atypical STEMI presentation in young adults",
-      time: "8h ago",
-      likes: 103,
-      comments: 27,
+      title:
+        "Why Newborn Survival Varies Across States and What Better-performing States Are Doing Differently",
+      href: "https://www.expresshealthcare.in/news/why-newborn-survival-varies-so-sharply-across-states-and-what-better-performing-states-are-doing-differently/453062/",
     },
     {
-      title: "Cardiology fellows debate post-MI rehab timelines",
-      time: "11h ago",
-      likes: 48,
-      comments: 9,
+      title:
+        "Unlocking the True Value of AI in Healthcare and Life Sciences: A Framework for Success",
+      href: "https://www.expresshealthcare.in/news/unlocking-the-true-value-of-ai-in-healthcare-and-life-sciences-a-framework-for-success/453089/",
     },
   ];
 
@@ -207,26 +203,35 @@ export default function FeedPage() {
           <section className="rounded-2xl border border-default-200 bg-white p-4">
             <div className="mb-3">
               <h3 className="text-xl font-bold text-gray-900">Top posts</h3>
-              <p className="text-sm text-gray-500">Trending in your network</p>
+              <p className="text-sm text-gray-500">Coming soon</p>
             </div>
+            <div className="rounded-xl border border-dashed border-default-200 bg-default-50 px-3 py-5 text-sm text-gray-500">
+              No top posts for now.
+            </div>
+          </section>
 
+          <section className="rounded-2xl border border-default-200 bg-white p-4">
             <div className="space-y-3">
-              {topPosts.map((post, index) => (
-                <div
-                  key={post.title}
+              <h3 className="text-base font-bold text-gray-900">
+                Top articles on medical science
+              </h3>
+              {topArticles.map((article, index) => (
+                <a
+                  key={article.href}
+                  href={article.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`rounded-xl px-2 py-1.5 transition hover:bg-default-50 ${
-                    index !== topPosts.length - 1
+                    index !== topArticles.length - 1
                       ? "border-b border-default-100 pb-3"
                       : ""
                   }`}
                 >
                   <p className="text-sm font-semibold text-gray-800 line-clamp-2">
-                    {post.title}
+                    {article.title}
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {post.time} · {post.likes} likes · {post.comments} comments
-                  </p>
-                </div>
+                  <p className="mt-1 text-xs text-primary">Read article</p>
+                </a>
               ))}
             </div>
           </section>
