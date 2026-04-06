@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 
 const AppNavbar = dynamic(() => import("@/components/layout/Navbar"), {
   ssr: false,
@@ -9,6 +10,24 @@ const AppNavbar = dynamic(() => import("@/components/layout/Navbar"), {
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const titleByRoute: Array<{ match: RegExp; title: string }> = [
+      { match: /^\/feed$/, title: "Feed" },
+      { match: /^\/connections(?:\/|$)/, title: "Connections" },
+      { match: /^\/notifications(?:\/|$)/, title: "Notifications" },
+      { match: /^\/posts\/[^/]+$/, title: "Post" },
+      { match: /^\/search\/results\/all$/, title: "Search Results" },
+      { match: /^\/search\/results\/content$/, title: "Search Content" },
+      { match: /^\/u\/[^/]+\/posts$/, title: "Profile Posts" },
+      { match: /^\/u\/[^/]+$/, title: "Profile" },
+    ];
+
+    const matched = titleByRoute.find((item) => item.match.test(pathname));
+    const pageTitle = matched?.title ? `${matched.title} | Serona` : "Serona";
+    document.title = pageTitle;
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-[#f6f9fb] relative">
