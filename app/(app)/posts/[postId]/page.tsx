@@ -19,7 +19,6 @@ export default function PostDetailsPage() {
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-6 gap-6">
         <div className="col-span-1 space-y-4">
-          <UserSummaryCardSkeleton />
           {isProfileLoading ? (
             <UserSummaryCardSkeleton />
           ) : profile ? (
@@ -47,7 +46,9 @@ export default function PostDetailsPage() {
                 id: String(post.id),
                 title: post.title,
                 author: {
-                  name: post.is_anonymous ? "Anonymous Doctor" : post.author_name,
+                  name: post.is_anonymous
+                    ? "Anonymous Doctor"
+                    : post.author_name,
                   avatar: post.is_anonymous ? undefined : post.author_avatar,
                   title: post.author_specialization
                     ? `${post.author_specialization} · ${post.author_hospital}`
@@ -72,7 +73,9 @@ export default function PostDetailsPage() {
           )}
         </div>
 
-        <div className="col-span-2 space-y-4">{/* Future: SuggestedDoctors / Trending */}</div>
+        <div className="col-span-2 space-y-4">
+          {/* Future: SuggestedDoctors / Trending */}
+        </div>
       </div>
     </div>
   );
