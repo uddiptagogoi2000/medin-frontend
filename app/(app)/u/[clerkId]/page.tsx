@@ -71,12 +71,6 @@ export default function ProfilePage() {
           limit={8}
           showViewAll
         />
-
-        <ExperienceSection
-          profile={profile}
-          isOwn={isOwnProfile}
-          setProfile={setProfile}
-        />
       </div>
     </div>
   );

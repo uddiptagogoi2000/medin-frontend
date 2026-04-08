@@ -16,7 +16,9 @@ export default function ConnectionsSidebar({ tab }: ConnectionsSidebarProps) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-white shadow-sm p-5">
-        <p className="font-semibold text-base text-gray-800 mb-4">Manage Connections</p>
+        <p className="font-semibold text-base text-gray-800 mb-4">
+          Manage Connections
+        </p>
 
         <div className="space-y-2">
           <button
@@ -31,7 +33,7 @@ export default function ConnectionsSidebar({ tab }: ConnectionsSidebarProps) {
               <Users size={14} />
               Followers
             </span>
-            <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs">1.2k</span>
+            {/* <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs">1.2k</span> */}
           </button>
 
           <button
@@ -46,7 +48,7 @@ export default function ConnectionsSidebar({ tab }: ConnectionsSidebarProps) {
               <UserRoundCheck size={14} />
               Following
             </span>
-            <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs">842</span>
+            {/* <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs">842</span> */}
           </button>
 
           <button
