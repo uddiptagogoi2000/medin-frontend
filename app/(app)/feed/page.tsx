@@ -39,8 +39,7 @@ export default function FeedPage() {
       href: "https://www.expresshealthcare.in/blogs/guest-blogs-healthcare/the-entry-of-technologies-into-tuberculosis-and-integrated-lung-health/453235/",
     },
     {
-      title:
-        "Caregiver Capital: The Invisible Workforce Powering Cancer Care",
+      title: "Caregiver Capital: The Invisible Workforce Powering Cancer Care",
       href: "https://www.expresshealthcare.in/news/caregiver-capital-the-invisible-workforce-powering-cancer-care/453122/",
     },
     {
@@ -142,8 +141,8 @@ export default function FeedPage() {
     trackPromptEvent(prompt.id, "clicked_post");
 
     setComposerDraft({
-      title: prompt.title,
-      body: prompt.body,
+      title: prompt.body,
+      body: "Write your thoughts here...",
       tags: prompt.suggested_tags ?? [],
     });
     setComposerOpen(true);
@@ -264,7 +263,10 @@ export default function FeedPage() {
     </div>
   );
 
-  async function trackPromptEvent(promptId: number, eventType: PromptEventType) {
+  async function trackPromptEvent(
+    promptId: number,
+    eventType: PromptEventType,
+  ) {
     try {
       const token = await getToken({ template: "backend" });
       await fetch(apiUrl(`/engagement/prompts/${promptId}/event`), {
