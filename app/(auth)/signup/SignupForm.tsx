@@ -1,9 +1,17 @@
 "use client";
 
 import { useSignUp, useAuth } from "@clerk/nextjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiUrl } from "@/utils/api";
 import { useRouter } from "next/navigation";
+
+const SIGNUP_INVITE_TOKEN_KEY = "serona_signup_invite_token";
+const INVALID_INVITE_ERROR =
+  "This invite link is invalid, expired, or has already been used. Please contact us for a new invite.";
+const BACKEND_INVALID_INVITE_MESSAGE =
+  "This invite link is invalid, expired, or has already been used.";
+const INVITE_VALIDATION_FAILURE_MESSAGE =
+  "We could not validate this invite link right now. Please refresh and try again.";
 
 export default function SignupForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -36,11 +44,107 @@ export default function SignupForm() {
   const [lastInviteMessage, setLastInviteMessage] = useState<string | null>(
     null,
   );
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteValidationLoading, setInviteValidationLoading] = useState(false);
+  const [inviteValidationError, setInviteValidationError] = useState<
+    string | null
+  >(null);
+  const [inviteBlocked, setInviteBlocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let isActive = true;
+
+    const validateInvite = async (rawToken: string) => {
+      setInviteValidationLoading(true);
+      setInviteValidationError(null);
+      setInviteBlocked(false);
+
+      try {
+        const response = await fetch(apiUrl("/users/invites/validate"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            invite_token: rawToken,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Invite validation failed.");
+        }
+
+        const data = await response.json();
+        const isValid = Boolean(data?.valid);
+
+        if (!isActive) return;
+
+        if (isValid) {
+          sessionStorage.setItem(SIGNUP_INVITE_TOKEN_KEY, rawToken);
+          setInviteToken(rawToken);
+          setInviteBlocked(false);
+          return;
+        }
+
+        sessionStorage.removeItem(SIGNUP_INVITE_TOKEN_KEY);
+        setInviteToken(null);
+        setInviteBlocked(true);
+        setInviteValidationError(
+          data?.message
+            ? `${data.message} Please contact us for a new invite.`
+            : INVALID_INVITE_ERROR,
+        );
+      } catch (error) {
+        console.error("Invite validation error:", error);
+
+        if (!isActive) return;
+
+        sessionStorage.removeItem(SIGNUP_INVITE_TOKEN_KEY);
+        setInviteToken(null);
+        setInviteBlocked(true);
+        setInviteValidationError(INVITE_VALIDATION_FAILURE_MESSAGE);
+      } finally {
+        if (isActive) {
+          setInviteValidationLoading(false);
+        }
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const inviteFromUrl = params.get("invite")?.trim() || "";
+    const storedInvite = sessionStorage
+      .getItem(SIGNUP_INVITE_TOKEN_KEY)
+      ?.trim();
+    const inviteToValidate = inviteFromUrl || storedInvite || "";
+
+    if (!inviteToValidate) {
+      sessionStorage.removeItem(SIGNUP_INVITE_TOKEN_KEY);
+      setInviteToken(null);
+      setInviteValidationLoading(false);
+      setInviteValidationError(null);
+      setInviteBlocked(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    void validateInvite(inviteToValidate);
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   // STEP 1 — Create signup + send OTP
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isLoaded) return;
+
+    if (inviteBlocked || inviteValidationLoading) {
+      return;
+    }
 
     setLoading(true);
     setPasswordError(null);
@@ -55,54 +159,56 @@ export default function SignupForm() {
         return;
       }
 
-      // Invite-only check (cached for unchanged email).
-      if (lastInviteCheckedEmail !== normalizedEmail) {
-        setInviteCheckLoading(true);
+      // Invite-only email allowlist check is only needed when no invite link token exists.
+      if (!inviteToken) {
+        if (lastInviteCheckedEmail !== normalizedEmail) {
+          setInviteCheckLoading(true);
 
-        try {
-          const inviteResponse = await fetch(apiUrl("/users/invite-check"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: trimmedEmail,
-            }),
-          });
+          try {
+            const inviteResponse = await fetch(apiUrl("/users/invite-check"), {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: trimmedEmail,
+              }),
+            });
 
-          if (!inviteResponse.ok) {
-            throw new Error("Invite check failed.");
-          }
+            if (!inviteResponse.ok) {
+              throw new Error("Invite check failed.");
+            }
 
-          const inviteData = await inviteResponse.json();
-          const isAllowed = Boolean(inviteData?.allowed);
-          const inviteMessage =
-            inviteData?.message ||
-            "This platform is invite-only. This email is not on the approved invite list.";
+            const inviteData = await inviteResponse.json();
+            const isAllowed = Boolean(inviteData?.allowed);
+            const inviteMessage =
+              inviteData?.message ||
+              "This platform is invite-only. This email is not on the approved invite list.";
 
-          setLastInviteCheckedEmail(normalizedEmail);
-          setLastInviteAllowed(isAllowed);
-          setLastInviteMessage(isAllowed ? null : inviteMessage);
+            setLastInviteCheckedEmail(normalizedEmail);
+            setLastInviteAllowed(isAllowed);
+            setLastInviteMessage(isAllowed ? null : inviteMessage);
 
-          if (!isAllowed) {
-            setGeneralError(inviteMessage);
+            if (!isAllowed) {
+              setGeneralError(inviteMessage);
+              return;
+            }
+          } catch (error) {
+            console.error("Invite check error:", error);
+            setGeneralError(
+              "We could not verify invite access right now. Please try again.",
+            );
             return;
+          } finally {
+            setInviteCheckLoading(false);
           }
-        } catch (error) {
-          console.error("Invite check error:", error);
+        } else if (lastInviteAllowed === false) {
           setGeneralError(
-            "We could not verify invite access right now. Please try again.",
+            lastInviteMessage ||
+              "This platform is invite-only. This email is not on the approved invite list.",
           );
           return;
-        } finally {
-          setInviteCheckLoading(false);
         }
-      } else if (lastInviteAllowed === false) {
-        setGeneralError(
-          lastInviteMessage ||
-            "This platform is invite-only. This email is not on the approved invite list.",
-        );
-        return;
       }
 
       const [firstName, ...rest] = form.fullName.trim().split(" ");
@@ -175,6 +281,7 @@ export default function SignupForm() {
             experience: Number(form.experience),
             specialization: form.specialization,
             hospital: form.hospital,
+            ...(inviteToken ? { invite_token: inviteToken } : {}),
           }),
         });
 
@@ -186,9 +293,24 @@ export default function SignupForm() {
           } catch {
             // ignore JSON parse failure
           }
+
+          if (
+            response.status === 403 &&
+            message === BACKEND_INVALID_INVITE_MESSAGE
+          ) {
+            sessionStorage.removeItem(SIGNUP_INVITE_TOKEN_KEY);
+            setInviteToken(null);
+            setInviteBlocked(true);
+            setInviteValidationError(INVALID_INVITE_ERROR);
+            setVerifying(false);
+            throw new Error(INVALID_INVITE_ERROR);
+          }
+
           throw new Error(message);
         }
 
+        sessionStorage.removeItem(SIGNUP_INVITE_TOKEN_KEY);
+        setInviteToken(null);
         setVerifying(false);
         router.push("/feed");
       } else {
@@ -208,6 +330,34 @@ export default function SignupForm() {
       setLoading(false);
     }
   };
+
+  // if (inviteValidationLoading) {
+  //   return (
+  //     <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-6">
+  //       <div className="space-y-2">
+  //         <h3 className="text-lg font-bold text-slate-900">
+  //           Validating invite
+  //         </h3>
+  //         <p className="text-sm text-slate-500">
+  //           We&apos;re checking your invite link before continuing with signup.
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  if (inviteBlocked) {
+    return (
+      <div className="w-full rounded-2xl border border-red-200 bg-red-50 p-6">
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-red-700">Invite unavailable</h3>
+          <p className="text-sm text-red-600">
+            {inviteValidationError || INVALID_INVITE_ERROR}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -379,12 +529,12 @@ export default function SignupForm() {
             )}
           </div>
 
-          <div className="flex items-start gap-3 py-2">
+          <div className="flex items-center gap-3 py-2">
             <input
-              className="mt-1 rounded border-slate-300 text-[#ec5b13]"
+              className="h-4 w-4 rounded border-slate-300 text-[#ec5b13]"
               type="checkbox"
             />
-            <p className="text-xs text-slate-500">
+            <p className="leading-relaxed text-xs text-slate-500">
               I agree to Serona{" "}
               <a
                 className="font-medium text-[#ec5b13] hover:underline"

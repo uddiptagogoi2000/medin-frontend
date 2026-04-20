@@ -4,8 +4,8 @@ import SignupForm from "./SignupForm";
 const SignupPage = () => {
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[#f8f6f6]">
-      <div className="flex h-screen w-full flex-col lg:flex-row">
-        <section className="relative hidden w-full overflow-hidden bg-slate-900 p-12 text-white lg:flex lg:w-5/12 xl:w-1/2 lg:flex-col lg:justify-between">
+      <div className="flex h-screen w-full flex-col overflow-hidden lg:flex-row">
+        <section className="relative hidden h-screen w-full overflow-hidden bg-slate-900 p-12 text-white lg:flex lg:w-5/12 lg:flex-col lg:justify-between xl:w-1/2">
           <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-[#ec5b13]/10 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
 
@@ -67,12 +67,12 @@ const SignupPage = () => {
           </div>
         </section>
 
-        <main className="flex h-full flex-1 flex-col items-center justify-center overflow-y-auto bg-white p-6 lg:p-12 xl:p-20">
-          <div className="mb-10 self-start lg:hidden">
+        <main className="flex h-screen min-h-0 flex-1 flex-col overflow-y-auto bg-white p-6 lg:p-12 xl:p-20">
+          <div className="mb-8 self-start pt-2 lg:hidden">
             <h2 className="text-xl font-bold text-slate-900">Serona</h2>
           </div>
 
-          <div className="w-full max-w-lg">
+          <div className="mx-auto w-full max-w-lg py-2 lg:py-6">
             <div className="mb-10">
               <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-900">
                 Join the Network
